@@ -45,7 +45,12 @@ const userSchema = new mongoose.Schema({
     }
 },{timestamps: true})
 
-//pre middleware
+// Prevents rehashing an already hashed password
+// Runs only when: New user is created ,Password is updated 
+
+// Skips when:
+// Updating other fields (like name/email)
+//pre middleware executes during saving fields in dB
 userSchema.pre("save", async function (){
     if(this.isModified("password")){
         this.password = await bcrypt.hash(this.password, 10); //encrypting the password 

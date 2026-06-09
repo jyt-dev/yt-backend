@@ -12,3 +12,6 @@ const subscriptionSchema = new moongose.Schema({
 },{timestamps: true})
 
 export const Subscription = moongose.model("Subscription", subscriptionSchema);
+
+//for getting subscribers of a user count that user in channel field of every documents
+//for getting following/subscribedTo of a user count that user in subscriber field of every documents
