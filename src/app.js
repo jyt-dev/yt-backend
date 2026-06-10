@@ -39,7 +39,9 @@ app.use("/api/v1/users", userRouter); //Route Mounting
 // If inside user.routes.js you have:
 // router.get("/login", ...) Final API becomes: /api/v1/users/login
 
-
+//video routes
+import videoRouter from "./routes/video.routes.js"
+app.use("api/v1/videos", videoRouter);
 
 export {app}; // You export app so it can be used in another file (usually server.js)  : app.listen(PORT)
 
