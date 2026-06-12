@@ -109,7 +109,7 @@ const getAllVideos = asyncHandler(async(req,res) => {
 
 })
 
-const publishAVideo = asyncHandler(async(req,res) => {
+const uploadAVideo = asyncHandler(async(req,res) => {
 
     const {videoTitle,description} = req.body;
 
@@ -136,7 +136,7 @@ const publishAVideo = asyncHandler(async(req,res) => {
         duration: uploadedVideo?.duration,
         owner: req.user?._id,
         thumbnail: uploadedThumbnail?.url,
-        isPublished: true
+        isPublished: false
     });
 
     if(!video){
@@ -145,7 +145,7 @@ const publishAVideo = asyncHandler(async(req,res) => {
 
     return res
              .status(201)
-             .json(new ApiResponse(201,video,"Video published successfully"));
+             .json(new ApiResponse(201,video,"Video uploaded successfully"));
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
@@ -253,7 +253,42 @@ const deleteVideo = asyncHandler(async (req, res) => {
              .json(new ApiResponse(200,{},"Video deleted successfully"));
 
 })
+const togglePublishStatus = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
 
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid video ID");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if(!video){
+        throw new ApiError(404, "Video not found");
+    }
+
+    if(video.owner.toString() !== req.user._id.toString()){
+        throw new ApiError(403,"Unauthorized request");
+    }
+
+    //when a user click toggle switch it reaches an endpoint and sends a http request to server 
+    //if video is published then it is unpublished or vice-versa
+
+    video.isPublished = !video.isPublished; 
+    await video.save({validateBeforeSave: false});
+
+    return res
+             .status(200)
+             .json(new ApiResponse(200,video,`Video ${video.isPublished ? "published" : "unpublished"} successfully`));
+})
+
+export {
+    getAllVideos,
+    getVideoById,
+    updateVideo,
+    uploadAVideo,
+    deleteVideo,
+    togglePublishStatus
+}
 
 
 
