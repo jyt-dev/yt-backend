@@ -4,7 +4,7 @@ import { asyncHandler } from "../utils/asyncHandler.js";
 import { Video } from "../models/video.model.js";
 import { ApiResponse } from "../utils/apiResponse";
 import { ApiError } from "../utils/apiError.js";
-import { uploadOnCloudinary } from "../utils/cloudinary.js";
+import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
 const getAllVideos = asyncHandler(async(req,res) => {
     
@@ -178,6 +178,16 @@ const updateVideo = asyncHandler(async (req, res) => {
         throw new ApiError(400, "Invalid video ID");
     }
 
+    const video = await Video.findById(videoId);
+
+    if(!video){
+        throw new ApiError(404, "Video not found");
+    }
+
+    if(video.owner.toString() !== req.user._id.toString()){
+        throw new ApiError(403,"Unauthorized request");
+    }
+
     const {videoTitle,thumbnail,description} = req.body;
 
     if(!videoTitle && !thumbnail && !description){
@@ -190,7 +200,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     if(description) updateFields.description = description;
     
     const videoUpdate = await Video.findByIdAndUpdate(
-        req.videoId,
+          videoId,
         {
             $set: {
                 updateFields
@@ -208,6 +218,40 @@ const updateVideo = asyncHandler(async (req, res) => {
     return res
              .status(200)
              .json(new ApiResponse(200,videoUpdate,"Video details updated successfully"));
+})
+
+const deleteVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: delete video
+
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid video Id");
+    }
+
+    const video = await Video.findById(videoId);
+
+    if(!video){
+        throw new ApiError(404,"Video not found");
+    }
+
+    //check authorization
+    if(video.owner.toString() !== req.user._id.toString()){
+        throw new ApiError(403,"Unauthorized request");
+    }
+    
+    const deleteVidFromCloudinary = await deleteFromCloudinary(video.videoFile);
+    const deleteThumbnail = await deleteFromCloudinary(video.thumbnail);
+
+    if(!deleteVidFromCloudinary){
+        throw new ApiError(400, "Video deletion from cloudinary failed");
+    }
+
+    await Video.findByIdAndDelete(videoId); //delete from mongodB 
+
+    return res
+             .status(200)
+             .json(new ApiResponse(200,{},"Video deleted successfully"));
+
 })
 
 
