@@ -117,7 +117,7 @@ const publishAVideo = asyncHandler(async(req,res) => {
     const thumbnailLocalPath = req.files?.thumbnail[0]?.path;
 
     if(!videoLocalPath || !thumbnailLocalPath){
-        throw new ApiError(400," required");
+        throw new ApiError(400," Thumbnail and Video required");
     }
 
     //Uploading video on cloudinary returns a url if success operation
@@ -146,6 +146,28 @@ const publishAVideo = asyncHandler(async(req,res) => {
     return res
              .status(201)
              .json(new ApiResponse(201,video,"Video published successfully"));
+})
+
+const getVideoById = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: get video by id
+
+    //check if it is a valid mongoDB objectID 
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400,"Invalid videoId");
+    }
+
+    const video = await Video.findById(videoId).populate(
+        "owner", "username fullName avatar"
+    );
+
+    if(!video){
+        throw new ApiError(404, "Video not available");
+    }
+
+    return res
+             .status(200)
+             .json(new ApiResponse(200,video,"Video fetched successfully"));
 })
 
 
