@@ -170,6 +170,46 @@ const getVideoById = asyncHandler(async (req, res) => {
              .json(new ApiResponse(200,video,"Video fetched successfully"));
 })
 
+const updateVideo = asyncHandler(async (req, res) => {
+    const { videoId } = req.params
+    //TODO: update video details like title, description, thumbnail
+
+    if(!mongoose.Types.ObjectId.isValid(videoId)){
+        throw new ApiError(400, "Invalid video ID");
+    }
+
+    const {videoTitle,thumbnail,description} = req.body;
+
+    if(!videoTitle && !thumbnail && !description){
+        throw new ApiError(400,"At least one of field is required");
+    }
+    const updateFields = {};
+
+    if(videoTitle) updateFields.videoTitle = videoTitle;
+    if(thumbnail) updateFields.thumbnail = thumbnail;
+    if(description) updateFields.description = description;
+    
+    const videoUpdate = await Video.findByIdAndUpdate(
+        req.videoId,
+        {
+            $set: {
+                updateFields
+            }
+        },
+        {
+            new: true
+        }
+    ).populate("owner","-password -refreshToken -coverImage");
+
+    if(!videoUpdate){
+        throw new ApiError(404,"Update failed");
+    }
+
+    return res
+             .status(200)
+             .json(new ApiResponse(200,videoUpdate,"Video details updated successfully"));
+})
+
 
 
 
