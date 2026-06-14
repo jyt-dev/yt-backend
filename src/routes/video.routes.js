@@ -1,10 +1,12 @@
 import { Router } from "express";
-import { verifyJWT } from "../middlewares/auth.middleware";
-import { deleteVideo, getAllVideos, getVideoById, togglePublishStatus, updateVideo, uploadAVideo } from "../controllers/video.controller";
-import { upload } from "../middlewares/multer.middleware";
+import { verifyJWT } from "../middlewares/auth.middleware.js";
+import { deleteVideo, getAllVideos, getVideoById, togglePublishStatus, updateVideo, uploadAVideo } from "../controllers/video.controller.js";
+import { upload } from "../middlewares/multer.middleware.js";
 
 
 const router = Router();
+
+console.log("Video routes loaded");
 
 router.use(verifyJWT); //applies all routes in this file
 
