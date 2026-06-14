@@ -8,6 +8,7 @@ import {app} from "./app.js";
 
 // const app = express();
 
+//server starts by connecting dB 
 connectDB()
 .then(() => {
     app.listen(process.env.PORT || 8000, () => {
