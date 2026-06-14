@@ -2,7 +2,7 @@ import mongoose from "mongoose";
 import { User } from "../models/user.model.js";
 import { asyncHandler } from "../utils/asyncHandler.js";
 import { Video } from "../models/video.model.js";
-import { ApiResponse } from "../utils/apiResponse";
+import { ApiResponse } from "../utils/apiResponse.js";
 import { ApiError } from "../utils/apiError.js";
 import { deleteFromCloudinary, uploadOnCloudinary } from "../utils/cloudinary.js";
 
@@ -26,8 +26,8 @@ const getAllVideos = asyncHandler(async(req,res) => {
         isPublished: true
     }
     //matches published videos of a specified user from requested url using userId
-    if(userId){
-        matchStage.owner = new mongoose.Types.ObjectId(userId)
+    if (userId && mongoose.Types.ObjectId.isValid(userId)) {
+        matchStage.owner = new mongoose.Types.ObjectId(userId);
     }
     //matches specific keywords from query to vidoetitle or description for searching
     if(query){
@@ -137,15 +137,16 @@ const uploadAVideo = asyncHandler(async(req,res) => {
         owner: req.user?._id,
         thumbnail: uploadedThumbnail?.url,
         isPublished: false
-    });
-
+    })
     if(!video){
         throw new ApiError(401,"DB Video field creation failed");
     }
+    const populatedVideo = await Video.findById(video._id)
+    .populate("owner", "username fullName avatar");
 
     return res
              .status(201)
-             .json(new ApiResponse(201,video,"Video uploaded successfully"));
+             .json(new ApiResponse(201,populatedVideo,"Video uploaded successfully"));
 })
 
 const getVideoById = asyncHandler(async (req, res) => {
@@ -174,6 +175,7 @@ const updateVideo = asyncHandler(async (req, res) => {
     const { videoId } = req.params
     //TODO: update video details like title, description, thumbnail
 
+    //check videoID is valid 
     if(!mongoose.Types.ObjectId.isValid(videoId)){
         throw new ApiError(400, "Invalid video ID");
     }
@@ -183,28 +185,36 @@ const updateVideo = asyncHandler(async (req, res) => {
     if(!video){
         throw new ApiError(404, "Video not found");
     }
-
+    //check authorization
     if(video.owner.toString() !== req.user._id.toString()){
         throw new ApiError(403,"Unauthorized request");
     }
 
-    const {videoTitle,thumbnail,description} = req.body;
+    const {videoTitle,description} = req.body;
+    
 
-    if(!videoTitle && !thumbnail && !description){
+    if(!videoTitle && !description && !req.file?.path){
         throw new ApiError(400,"At least one of field is required");
     }
     const updateFields = {};
 
     if(videoTitle) updateFields.videoTitle = videoTitle;
-    if(thumbnail) updateFields.thumbnail = thumbnail;
+
+    if(req.file?.path) {
+        const thumbnailLocalPath = await req.file?.path;
+        const uploadedThumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+        if(!uploadedThumbnail){
+            throw new ApiError(400,"Thumbnail upload failed");
+        }
+        updateFields.thumbnail = uploadedThumbnail?.url
+    }
+    
     if(description) updateFields.description = description;
     
     const videoUpdate = await Video.findByIdAndUpdate(
           videoId,
         {
-            $set: {
-                updateFields
-            }
+            $set: updateFields
         },
         {
             new: true
