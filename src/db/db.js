@@ -6,9 +6,10 @@ import { setServers } from "node:dns/promises";
 
 setServers(["1.1.1.1", "8.8.8.8"]);
 
+//database connection function
 const connectDB = async () => {
     try {
-        const connectionInstance = await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`)
+        const connectionInstance = await mongoose.connect(`${process.env.MONGODB_URI}/${DB_NAME}`) //connection b/w server and db
         console.log(`MongoDB connected!!  DB Host : ${connectionInstance.connection.host}`);
         
     }
