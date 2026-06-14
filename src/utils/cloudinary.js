@@ -51,7 +51,7 @@ const deleteFromCloudinary = async (cloudinaryUrl) => {
         } else if (cloudinaryUrl.includes("/raw/")) {
             resourceType = "raw";
         }
-        
+
         const response = await cloudinary.uploader.destroy(publicId, {
             resource_type: resourceType,
             invalidate: true
@@ -62,6 +62,8 @@ const deleteFromCloudinary = async (cloudinaryUrl) => {
         console.error("Cloudinary file deletion failed");
         return null;
     }
-} 
+}
+
+
 
 export {uploadOnCloudinary, deleteFromCloudinary};
